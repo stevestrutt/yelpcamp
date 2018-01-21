@@ -8,6 +8,7 @@ var express         = require('express'),
     // Comment         = require('./models/comments'),
     User            = require('./models/user'),
     // seedDB          = require('./seed'),
+    flash           = require('connect-flash'),
     methodOverride  = require('method-override');
 
 // requiring routes
@@ -19,6 +20,7 @@ mongoose.connect('mongodb://localhost/yelpcamp');
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static(__dirname + '/public'));
 app.use(methodOverride('_method'));
+app.use(flash());
 // seedDB();
 
 // Passport Configuration
@@ -37,6 +39,8 @@ passport.deserializeUser(User.deserializeUser());
 // Middleware to automatically add username object to each response for display in header
 app.use(function(req, res, next) {
     res.locals.currentUser = req.user;
+    res.locals.error = req.flash('error');
+    res.locals.success = req.flash('success');
     next();
 });
 

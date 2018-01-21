@@ -1,7 +1,8 @@
 var express     = require('express'),
     router      = express.Router({mergeParams: true}),
     Campground  = require('../models/campgrounds'),
-    Comment     = require('../models/comments');
+    Comment     = require('../models/comments'),
+    middleware = require('../middleware');
 
 //= ===============================================
 // Routes - Comments
@@ -9,7 +10,7 @@ var express     = require('express'),
 
 // Comments NEW
 // isLoggedIn defined as middleware to authenticate on every route
-router.get('/new', isLoggedIn, function(req, res) {
+router.get('/new', middleware.isLoggedIn, function(req, res) {
     Campground.findById(req.params.id, function(err, foundCampground) {
         if (err) {
             console.log('Error ' + err);
@@ -24,7 +25,7 @@ router.get('/new', isLoggedIn, function(req, res) {
 
 // Comments save
 
-router.post('/', isLoggedIn, function(req, res) {
+router.post('/', middleware.isLoggedIn, function(req, res) {
     Campground.findById(req.params.id, function(err, foundCampground) {
         if (err) {
             console.log('Error ' + err);
@@ -35,6 +36,7 @@ router.post('/', isLoggedIn, function(req, res) {
             var newComment = req.body.comment;
             Comment.create(newComment, function(err, comment) {
                 if (err) {
+                    req.flash('error', 'Something went wrong on the comment create');
                     console.log(err);
                 } else {
                     comment.author.id = req.user.id;
@@ -45,6 +47,7 @@ router.post('/', isLoggedIn, function(req, res) {
                         if (err) {
                             console.log(err);
                         } else {
+                            req.flash('success', 'Successfully added comment');
                             res.redirect('/campgrounds/' + foundCampground._id);
                         }
                     });
@@ -54,7 +57,7 @@ router.post('/', isLoggedIn, function(req, res) {
     }); // Find by ID
 });
 
-router.get('/:comment_id/edit', checkCommentOwnership, function(req, res) {
+router.get('/:comment_id/edit', middleware.checkCommentOwnership, function(req, res) {
     Comment.findById(req.params.comment_id, function(err, foundComment) {
         if (err) {
             console.log('Error ' + err);
@@ -65,7 +68,7 @@ router.get('/:comment_id/edit', checkCommentOwnership, function(req, res) {
     });
 });
 
-router.put('/:comment_id', checkCommentOwnership, function(req, res) {
+router.put('/:comment_id', middleware.checkCommentOwnership, function(req, res) {
     Comment.findByIdAndUpdate(req.params.comment_id, req.body.comment, function(err, comment) {
         if (err) {
             console.log(err);
@@ -77,47 +80,16 @@ router.put('/:comment_id', checkCommentOwnership, function(req, res) {
 });
 
 // COMMENT DESTORY ROUTE
-router.delete('/:comment_id', checkCommentOwnership, function(req, res) {
+router.delete('/:comment_id', middleware.checkCommentOwnership, function(req, res) {
     Comment.findByIdAndRemove(req.params.comment_id, function(err) {
         if (err) {
             console.log('Comment delete error ' + err);
             res.redirect('back');
         } else {
+            req.flash('success', 'Comment deleted');
             res.redirect('/campgrounds/' + req.params.id);
         }
     });
 });
-
-// Authentication middleware needed on every route that needs securing
-function isLoggedIn(req, res, next) {
-    console.log('Check for login');
-    if (req.isAuthenticated()) {
-        return next();
-    }
-    res.redirect('/login');
-}
-
-// Authorisation middleware
-function checkCommentOwnership(req, res, next) {
-    if (req.isAuthenticated()) {
-        // Does user own campgroun? id's matching
-        Comment.findById(req.params.comment_id, function(err, foundComment) {
-            if (err) {
-                console.log('Error occured ' + err);
-                res.redirect('/campgrounds');
-            } else {
-                if (foundComment.author.id.equals(req.user._id)) {
-                    next();
-                } else {
-                    res.redirect('back');
-                }
-            }
-        });
-    } else {
-        console.log('You need to be logged in to edit');
-        res.redirect('back');
-        // res.redirect('/login');
-    }
-}
 
 module.exports = router;
