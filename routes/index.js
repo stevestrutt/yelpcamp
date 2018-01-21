@@ -32,10 +32,12 @@ router.post('/register', function(req, res) {
     });
 });
 
+// handling login logic
 router.get('/login', function(req, res) {
     res.render('login');
 });
 
+// logic route
 router.post('/login', passport.authenticate('local',
     {
         successRedirect: '/campgrounds',

@@ -11,9 +11,7 @@
 						<!--  name="comment[text]"  insert text into comment object, nakes retrieving in POST route easier -->
 					<input class="form-control" type="text" name="comment[text]" placeholder="new comment">
 				</div>
-				<div class=form-group>
-					<input class="form-control" type="text" name="comment[author]" placeholder="Author">
-				</div>
+				<!-- Author is added from req.user in post route -->
 				<div class=form-group>
 					<input class="btn btn-default btn-primary btn-block" type="submit" name="submit">
 				</div>

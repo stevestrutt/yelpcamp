@@ -37,13 +37,14 @@ router.post('/', isLoggedIn, function(req, res) {
                 if (err) {
                     console.log(err);
                 } else {
+                    comment.author.id = req.user.id;
+                    comment.author.username = req.user.username;
+                    comment.save();
                     foundCampground.comments.push(comment._id);
                     foundCampground.save(function(err, data) {
                         if (err) {
                             console.log(err);
                         } else {
-                            console.log('Call to render new page with added comment');
-                            console.log('/campgrounds/' + foundCampground._id);
                             res.redirect('/campgrounds/' + foundCampground._id);
                         }
                     });
@@ -53,6 +54,40 @@ router.post('/', isLoggedIn, function(req, res) {
     }); // Find by ID
 });
 
+router.get('/:comment_id/edit', checkCommentOwnership, function(req, res) {
+    Comment.findById(req.params.comment_id, function(err, foundComment) {
+        if (err) {
+            console.log('Error ' + err);
+            res.redirect('back');
+        } else {
+            res.render('comments/edit', {campground_id: req.params.id, comment: foundComment});
+        }
+    });
+});
+
+router.put('/:comment_id', checkCommentOwnership, function(req, res) {
+    Comment.findByIdAndUpdate(req.params.comment_id, req.body.comment, function(err, comment) {
+        if (err) {
+            console.log(err);
+            res.redirect('back');
+        } else {
+            res.redirect('/campgrounds/' + req.params.id);
+        }
+    });
+});
+
+// COMMENT DESTORY ROUTE
+router.delete('/:comment_id', checkCommentOwnership, function(req, res) {
+    Comment.findByIdAndRemove(req.params.comment_id, function(err) {
+        if (err) {
+            console.log('Comment delete error ' + err);
+            res.redirect('back');
+        } else {
+            res.redirect('/campgrounds/' + req.params.id);
+        }
+    });
+});
+
 // Authentication middleware needed on every route that needs securing
 function isLoggedIn(req, res, next) {
     console.log('Check for login');
@@ -60,6 +95,29 @@ function isLoggedIn(req, res, next) {
         return next();
     }
     res.redirect('/login');
+}
+
+// Authorisation middleware
+function checkCommentOwnership(req, res, next) {
+    if (req.isAuthenticated()) {
+        // Does user own campgroun? id's matching
+        Comment.findById(req.params.comment_id, function(err, foundComment) {
+            if (err) {
+                console.log('Error occured ' + err);
+                res.redirect('/campgrounds');
+            } else {
+                if (foundComment.author.id.equals(req.user._id)) {
+                    next();
+                } else {
+                    res.redirect('back');
+                }
+            }
+        });
+    } else {
+        console.log('You need to be logged in to edit');
+        res.redirect('back');
+        // res.redirect('/login');
+    }
 }
 
 module.exports = router;
