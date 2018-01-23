@@ -22,7 +22,7 @@ var dbuser          = process.env.DBUSER;
 var dbpassword      = process.env.DBPASSWORD;
 var url = 'mongodb://' + dbuser + ':' + dbpassword + '@ds113648.mlab.com:13648/yelpcampsps2';
 console.log(url);
-if (appEnv.isLocal === false) {
+if (appEnv.isLocal === true) {
     url = 'mongodb://localhost/yelpcamp';
 }
 
