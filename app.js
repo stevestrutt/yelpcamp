@@ -18,8 +18,15 @@ var commentRoutes   = require('./routes/comments'),
     indexRoutes     = require('./routes/index');
 
 var appEnv          = cfenv.getAppEnv();
+var dbuser          = process.env.DBUSER;
+var dbpassword      = process.env.DBPASSWORD;
+var url = 'mongodb://' + dbuser + ':' + dbpassword + '@ds113648.mlab.com:13648/yelpcampsps2';
+console.log(url);
+if (appEnv.isLocal === false) {
+    url = 'mongodb://localhost/yelpcamp';
+}
 
-mongoose.connect('mongodb://localhost/yelpcamp');
+mongoose.connect(url);
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static(__dirname + '/public'));
 app.use(methodOverride('_method'));
