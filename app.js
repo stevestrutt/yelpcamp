@@ -9,12 +9,15 @@ var express         = require('express'),
     User            = require('./models/user'),
     // seedDB          = require('./seed'),
     flash           = require('connect-flash'),
+    cfenv           = require('cfenv'),
     methodOverride  = require('method-override');
 
 // requiring routes
 var commentRoutes   = require('./routes/comments'),
     campgroundRoutes = require('./routes/campgrounds'),
     indexRoutes     = require('./routes/index');
+
+var appEnv          = cfenv.getAppEnv();
 
 mongoose.connect('mongodb://localhost/yelpcamp');
 app.use(bodyParser.urlencoded({extended: true}));
@@ -50,6 +53,9 @@ app.use(indexRoutes);
 app.use('/campgrounds/:id/comments', commentRoutes);
 app.use('/campgrounds', campgroundRoutes);
 
-app.listen(3000, function() {
-    console.log('server started');
+var port = '3000';
+console.log(appEnv);
+if (appEnv.isLocal != true) { port = appEnv.port; }
+app.listen(port, function() {
+    console.log('server starting on ' + appEnv.bind + ':' + port);
 });
